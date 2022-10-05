@@ -95,14 +95,9 @@ exports.tweet = functions.https.onRequest(async (request,response)=>{
 
     await dbRef.set({accessToken,refreshToken:newRefreshToken});
 
-    // const nextTweet = await openai.createCompletion('text-davinci-001', {
-    //     prompt: 'tweet something cool for #techtwitter',
-    //     max_tokens: 64,
-    //   });
     const nextTweet = await openai.createCompletion({
         model: 'text-davinci-002',
         prompt: 'tweet something cool for #techtwitter',
-        // max_tokens: 64,
         temperature:0.6,
     });
 
