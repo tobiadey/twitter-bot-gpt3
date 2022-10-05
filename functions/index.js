@@ -95,14 +95,20 @@ exports.tweet = functions.https.onRequest(async (request,response)=>{
 
     await dbRef.set({accessToken,refreshToken:newRefreshToken});
 
-    const nextTweet = await openai.createCompletion('text-davinci-001', {
+    // const nextTweet = await openai.createCompletion('text-davinci-001', {
+    //     prompt: 'tweet something cool for #techtwitter',
+    //     max_tokens: 64,
+    //   });
+    const nextTweet = await openai.createCompletion({
+        model: 'text-davinci-002',
         prompt: 'tweet something cool for #techtwitter',
-        max_tokens: 64,
-      });
+        // max_tokens: 64,
+        temperature:0.6,
+    });
 
+    
     const { data } = await refreshedClient.v2.tweet(
-        // nextTweet.data.choices[0].text
-        // 'testing: hello world'
+        nextTweet.data.choices[0].text
     );
 
     response.send(data);
@@ -124,6 +130,21 @@ exports.account = functions.https.onRequest(async (request,response)=>{
     const { data } = await refreshedClient.v2.me(); // start using the client if you want
 
     response.send(data);
+
+});
+
+
+//open ai solo 
+exports.openai = functions.https.onRequest(async (request,response)=>{
+
+    const nextTweet = await openai.createCompletion({
+        model: 'text-davinci-002',
+        prompt: 'tweet something cool for #techtwitter',
+        // max_tokens: 64,
+        temperature:0.6,
+      });
+
+    response.send(nextTweet.data.choices[0].text);
 
 });
 
