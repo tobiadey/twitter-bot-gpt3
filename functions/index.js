@@ -2,17 +2,17 @@
 // http://localhost:5000/agile-sanctum-359508/us-central1/callback
 // http://localhost:5000/agile-sanctum-359508/us-central1/tweet
 
-
+/* eslint-env es6 */
+/* eslint-disable no-console */
 const functions = require("firebase-functions");
-const admin = require('firebase-admin');
+const admin = require("firebase-admin");
 admin.initializeApp();
-// require("dotenv").config();
 
 // reference to document in firestore db
-const dbRef = admin.firestore().doc('tokens/MOwJ098vHDovmQaKPrSo');
+const dbRef = admin.firestore().doc("tokens/MOwJ098vHDovmQaKPrSo");
 
 //init twitter api (using OAuth 2.0)
-const TwitterApi = require('twitter-api-v2').default;
+const TwitterApi = require("twitter-api-v2").default;
 const twitterClient = new TwitterApi({
     clientId: process.env.CLIENT_ID ,
     clientSecret: process.env.CLIENT_SECRET,
@@ -22,10 +22,10 @@ const twitterClient = new TwitterApi({
 
 }); 
 
-const callbackURL = 'http://127.0.0.1:5000/agile-sanctum-359508/us-central1/callback'
+const callbackURL = "http://127.0.0.1:5000/agile-sanctum-359508/us-central1/callback"
 
 // OpenAI API init
-const { Configuration, OpenAIApi } = require('openai');
+const { Configuration, OpenAIApi } = require("openai");
 const configuration = new Configuration({
   organization: process.env.OPENAI_ORG,
   apiKey: process.env.OPENAI_SECRET,
@@ -35,10 +35,11 @@ const openai = new OpenAIApi(configuration);
 
 // STEP 1 - Auth URL
 //generate authentication link
-exports.auth = functions.https.onRequest(async (request,response)=>{
+exports.auth = functions.https.onRequest(async (request,response) => {
+
     const {url, codeVerifier, state} = twitterClient.generateOAuth2AuthLink(
         callbackURL,
-        {scope: ['tweet.read', 'tweet.write','users.read','offline.access']}
+        {scope: ["tweet.read", "tweet.write","users.read","offline.access"]}
     );
 
     //store verifier in db
@@ -60,7 +61,7 @@ exports.callback = functions.https.onRequest(async (request,response) => {
     const {codeVerifier, state:storedState} = dbSnapshot.data();
 
     if (state !== storedState) {
-        return response.status(400).send('Stored tokens do not match!')
+        return response.status(400).send("Stored tokens do not match!")
     }
 
     const {
@@ -96,8 +97,8 @@ exports.tweet = functions.https.onRequest(async (request,response)=>{
     await dbRef.set({accessToken,refreshToken:newRefreshToken});
 
     const nextTweet = await openai.createCompletion({
-        model: 'text-davinci-002',
-        prompt: 'tweet something cool for #techtwitter',
+        model: "text-davinci-002",
+        prompt: "tweet something cool for #techtwitter",
         temperature:0.6,
     });
 
@@ -110,45 +111,55 @@ exports.tweet = functions.https.onRequest(async (request,response)=>{
 
 });
 
-
-exports.account = functions.https.onRequest(async (request,response)=>{
-    const{refreshToken} = (await dbRef.get()).data();
-
-    const{
-        client: refreshedClient,
-        accessToken,
-        refreshToken: newRefreshToken,
-    } = await twitterClient.refreshOAuth2Token(refreshToken);
-
-    await dbRef.set({accessToken,refreshToken:newRefreshToken});
-
-    const { data } = await refreshedClient.v2.me(); // start using the client if you want
-
-    response.send(data);
-
-});
+// step4
+exports.tweetHourly = functions.pubsub
+    .schedule("* * * * *") //every minute
+    .onRun((context) =>{
+        console.log("This new cron job is srating!");
+        this.tweet();
+        functions.logger.info("Hello logs!");
+        return null;
+    })
 
 
-//open ai solo 
-exports.openai = functions.https.onRequest(async (request,response)=>{
-
-    const nextTweet = await openai.createCompletion({
-        model: 'text-davinci-002',
-        prompt: 'tweet something cool for #techtwitter',
-        // max_tokens: 64,
-        temperature:0.6,
-      });
-
-    response.send(nextTweet.data.choices[0].text);
-
-});
 
 
-// exports.tweetHourly = functions.pubsub
-//     .schedule('0 * * * *')
-//     .onRun(async(context) =>{
+// //testing return account
+// exports.account = functions.https.onRequest(async (request,response)=>{
+//     const{refreshToken} = (await dbRef.get()).data();
 
-//     })
+//     const{
+//         client: refreshedClient,
+//         accessToken,
+//         refreshToken: newRefreshToken,
+//     } = await twitterClient.refreshOAuth2Token(refreshToken);
 
-// Create and Deploy Your First Cloud Functions
-// https://firebase.google.com/docs/functions/write-firebase-functions
+//     await dbRef.set({accessToken,refreshToken:newRefreshToken});
+
+//     const { data } = await refreshedClient.v2.me(); // start using the client if you want
+
+//     response.send(data);
+
+// });
+
+
+// // open ai solo 
+// exports.openai = functions.https.onRequest(async (request,response)=>{
+
+//     const nextTweet = await openai.createCompletion({
+//         model: "text-davinci-002",
+//         prompt: "fashion glen martens",
+//         max_tokens: 64,
+//         temperature:0.6,
+//       });
+
+//     console.log("Hello worlds");
+//     response.send(nextTweet.data.choices[0].text);
+
+
+// });
+
+
+
+
+
