@@ -1,6 +1,3 @@
-// http://localhost:5000/agile-sanctum-359508/us-central1/auth
-// http://localhost:5000/agile-sanctum-359508/us-central1/callback
-// http://localhost:5000/agile-sanctum-359508/us-central1/tweet
 
 /* eslint-env es6 */
 /* eslint-disable no-console */
@@ -32,6 +29,8 @@ const configuration = new Configuration({
 });
 const openai = new OpenAIApi(configuration);
 
+//import request to trigger the tweet at certain intervals (scheduled function call)
+const request = require('request');
 
 // STEP 1 - Auth URL
 //generate authentication link
@@ -98,7 +97,7 @@ exports.tweet = functions.https.onRequest(async (request,response)=>{
 
     const nextTweet = await openai.createCompletion({
         model: "text-davinci-002",
-        prompt: "tweet something cool for #techtwitter",
+        prompt: "tweet something cool about fashion",
         temperature:0.6,
     });
 
@@ -116,8 +115,18 @@ exports.tweetHourly = functions.pubsub
     .schedule("* * * * *") //every minute
     .onRun((context) =>{
         console.log("This new cron job is srating!");
-        this.tweet();
         functions.logger.info("Hello logs!");
+        const options = {
+        'method': 'GET',
+        'url': process.env.TWEET_FUNCTION_TRIGGER,
+        'headers': {
+        }
+        };
+        request(options, function (error, response) {
+            if (error) throw new Error(error);
+            console.log(response.body);
+            });
+
         return null;
     })
 
