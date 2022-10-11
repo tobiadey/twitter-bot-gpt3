@@ -6,7 +6,7 @@ const admin = require("firebase-admin");
 admin.initializeApp();
 
 // reference to document in firestore db
-const dbRef = admin.firestore().doc("tokens/MOwJ098vHDovmQaKPrSo");
+const dbRef = admin.firestore().doc(process.env.DB_REFERENCE);
 
 //init twitter api (using OAuth 2.0)
 const TwitterApi = require("twitter-api-v2").default;
@@ -19,7 +19,7 @@ const twitterClient = new TwitterApi({
 
 }); 
 
-const callbackURL = "http://127.0.0.1:5000/agile-sanctum-359508/us-central1/callback"
+const callbackURL = process.env.CALLBACK_URL
 
 // OpenAI API init
 const { Configuration, OpenAIApi } = require("openai");
@@ -133,40 +133,6 @@ exports.tweetHourly = functions.pubsub
 
 
 
-// //testing return account
-// exports.account = functions.https.onRequest(async (request,response)=>{
-//     const{refreshToken} = (await dbRef.get()).data();
-
-//     const{
-//         client: refreshedClient,
-//         accessToken,
-//         refreshToken: newRefreshToken,
-//     } = await twitterClient.refreshOAuth2Token(refreshToken);
-
-//     await dbRef.set({accessToken,refreshToken:newRefreshToken});
-
-//     const { data } = await refreshedClient.v2.me(); // start using the client if you want
-
-//     response.send(data);
-
-// });
-
-
-// // open ai solo 
-// exports.openai = functions.https.onRequest(async (request,response)=>{
-
-//     const nextTweet = await openai.createCompletion({
-//         model: "text-davinci-002",
-//         prompt: "fashion glen martens",
-//         max_tokens: 64,
-//         temperature:0.6,
-//       });
-
-//     console.log("Hello worlds");
-//     response.send(nextTweet.data.choices[0].text);
-
-
-// });
 
 
 
