@@ -4,7 +4,7 @@
 const request = require('request');
 const options = {
   'method': 'GET',
-  'url': 'https://us-central1-agile-sanctum-359508.cloudfunctions.net/tweet',
+  'url': process.env.TWEET_FUNCTION_TRIGGER,
   'headers': {
   }
 };

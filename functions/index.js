@@ -136,5 +136,3 @@ exports.tweetHourly = functions.pubsub
 
 
 
-
-
